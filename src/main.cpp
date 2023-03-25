@@ -6,32 +6,22 @@
 #include <Arduino.h>
 #include "libwifi.h"
 #include "Wifi.h"
-
 DHT dht(DHTPIN, DHTTYPE);  //Creamos el objeto que representa al sensor
-
-
-
 const char * ssid = "ASUSDCGG";
 const char * password = "3164173706Cc";
 const char * host = "dweet.io";
 const int puerto = 80;
 //String server="dweet.io"; es redundante con host 
-String url="/dweet.io/dweet/for/uceva02?temperatura=32.5";
+//String url="/dweet.io/dweet/for/uceva02?temperatura=32.5";
 
-void setup(){
-   Serial.begin(9600);
-   Serial.println("Ensayo del DHT22!");
-   dht.begin();
-
-   pinMode(2,OUTPUT); //Coloco el pin 2 como salida
-   Serial.begin(115200);
-   Serial.println("Inicializando el dispositivo");
-   conectarWifi(ssid, password);
+void setup(){  
+      Serial.begin(115200);
+      Serial.println("Inicializando el dispositivo");
+      pinMode(2,OUTPUT); //Coloco el pin 2 como salida
+      conectarWifi(ssid, password);
+      dht.begin();
 
 }
-
-
-
 /**
  * @brief Esta funcion con bucle infinito
  prueba
@@ -39,32 +29,19 @@ void setup(){
 void loop(){
    delay(2000);
    float humedad = dht.readHumidity(); //Leemos la humedad en % de humedad relativa (0 al 100%)
-   float temperatura = dht.readTemperature(); //Leemos la temperatura en °C
-   float tempFarenheit = dht.readTemperature(true); //Leemos la temperatura en grados farenheit
-   
+   float temperatura = dht.readTemperature(); //Leemos la temperatura en °C   
    //Verificamos las lecturas del sensor
-   if(isnan(humedad) || isnan(temperatura) || isnan(tempFarenheit)){
+   if(isnan(humedad) || isnan(temperatura)){
      Serial.println("Fallo la lectura del sensor");
      return;
-   }
-
-   //Calculamos la sensacion termica o indice de calor
-   float indice = dht.computeHeatIndex(tempFarenheit, humedad);
-
-   //Calculamos la sensacion termica o indice de calor en celsius
-   float indiceCelsius = dht.computeHeatIndex(temperatura, humedad, false);
+   }   
 
    Serial.print(F("Humedad: ")); //La F() siginifica que lo que esta dentro del parentesis se escribe en la FLASH
    Serial.print(humedad);
    Serial.print(F("%  Temperatura: ")); //La F() siginifica que lo que esta dentro del parentesis se escribe en la FLASH
    Serial.print(temperatura);
-   Serial.print(F("°C  Indice de calor: ")); //La F() siginifica que lo que esta dentro del parentesis se escribe en la FLASH
-   Serial.print(indice);
-   Serial.print(F("°F  Indice de calor: ")); //La F() siginifica que lo que esta dentro del parentesis se escribe en la FLASH
-   Serial.print(indiceCelsius);
-   Serial.println(F("°C")); //La F() siginifica que lo que esta dentro del parentesis se escribe en la FLASH
-
-  WiFiClient cliente;//creamos cliente TCP por wifi 
+   String url = "/dweet/for/uceva02?temperatura=" + String(temperatura) + "&humedad=" + String(humedad);
+   WiFiClient cliente;//creamos cliente TCP por wifi 
   
   //BLOQUE que raliza la conexion al servidor
   if(!cliente.connect(host, puerto)){
@@ -72,8 +49,7 @@ void loop(){
     delay(2000);
     return;
   } 
-
-  //Peticion (request) GET al servidor HTTP
+    //Peticion (request) GET al servidor HTTP
   cliente.print("GET " +url+" HTTP/1.1\r\nHost: "+String(host)+"\r\n"+"Connection: close\r\n\r\n");
   //Tiempo al servidor a que responda la peticion(response)
   //delay(5000);// no funciona aqui porque bloquea wifi 
@@ -94,3 +70,4 @@ void loop(){
     
     delay(2000);//espero 2s
 }
+
